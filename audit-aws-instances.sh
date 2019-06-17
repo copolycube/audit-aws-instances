@@ -12,8 +12,10 @@ for region in $aws_regions; do
     # Critical (exit code 2) if > this number
     crit=4
 
-    used_types=$(/usr/local/bin/aws ec2 describe-reserved-instances --region $region --filter Name=state,Values=active Name=scope,Values=Region --output text | grep RESERVEDINSTANCES | awk '{print $8}' |sort|uniq)
-
+    reserved_types=$(/usr/local/bin/aws ec2 describe-reserved-instances --region $region --filter Name=state,Values=active Name=scope,Values=Region --output text | grep RESERVEDINSTANCES | awk '{print $8}')
+    in_use_types=$(/usr/local/bin/aws ec2 describe-instances --query 'Reservations[].Instances[].[InstanceType]' --output text)
+    used_types=$(echo $reserved_types $in_use_types | sort | uniq)
+    
     active_res=$(/usr/local/bin/aws ec2 describe-reserved-instances --filter Name=state,Values=active Name=scope,Values="Availability Zone" --output text --region $region)
     active_conv=$(/usr/local/bin/aws ec2 describe-reserved-instances --filter Name=state,Values=active Name=scope,Values=Region --output text --region $region)
     active_ins=$(/usr/local/bin/aws ec2 describe-instances --filter Name=instance-state-name,Values=running --output text --region $region)
